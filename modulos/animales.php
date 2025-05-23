@@ -415,7 +415,7 @@ $precio_por_kg = 10000;
 
     <div x-cloak x-show="openModalVacunar" x-transition class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-vacunar-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="openModalVacunar" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="openModalVacunar = false; animalParaVacunar = null; selectedMedicamentos = {};"></div>
+            <div x-show="openModalVacunar" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="openModalVacunar = false; animalParaVacunar = null; selectedMedicamentos = {}; searchTermMedicamentos = '';"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div x-show="openModalVacunar" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -432,11 +432,20 @@ $precio_por_kg = 10000;
                                     Selecciona los medicamentos a utilizar para la vacunación del animal.
                                 </p>
                             </div>
-                            <div class="mt-4 space-y-3">
+                            <div class="mt-4">
+                                <label for="search_medicamento" class="sr-only">Buscar Medicamento</label>
+                                <div class="relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="bi bi-search text-gray-400"></i>
+                                    </div>
+                                    <input type="text" id="search_medicamento" x-model="searchTermMedicamentos" placeholder="Buscar medicamento..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                                </div>
+                            </div>
+                            <div class="mt-4 space-y-3 max-h-60 overflow-y-auto custom-scrollbar">
                                 <?php if (empty($inventario_medicamentos_list)): ?>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">No hay medicamentos disponibles en el inventario.</p>
                                 <?php else: ?>
-                                    <template x-for="med in inventarioMedicamentos" :key="med.id">
+                                    <template x-for="med in filteredMedicamentos" :key="med.id">
                                         <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                                             <label :for="'med_qty_' + med.id" class="text-sm font-medium text-gray-700 dark:text-gray-300 flex-grow">
                                                 <span x-text="med.nombre"></span> 
@@ -450,6 +459,9 @@ $precio_por_kg = 10000;
                                                    class="ml-4 w-24 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                                         </div>
                                     </template>
+                                    <template x-if="filteredMedicamentos.length === 0 && searchTermMedicamentos.length > 0">
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No se encontraron medicamentos con ese nombre.</p>
+                                    </template>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -459,7 +471,7 @@ $precio_por_kg = 10000;
                     <button type="button" @click="confirmarVacunacion()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm" :disabled="Object.keys(selectedMedicamentos).length === 0 && inventarioMedicamentos.length > 0">
                         Confirmar Vacunación
                     </button>
-                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="openModalVacunar = false; animalParaVacunar = null; selectedMedicamentos = {};">
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="openModalVacunar = false; animalParaVacunar = null; selectedMedicamentos = {}; searchTermMedicamentos = '';">
                         Cancelar
                     </button>
                 </div>
@@ -491,6 +503,18 @@ $precio_por_kg = 10000;
                 // Inventario de medicamentos disponible en el frontend (pasado desde PHP)
                 inventarioMedicamentos: <?= json_encode($inventario_medicamentos_list) ?>,
                 selectedMedicamentos: {}, // Para almacenar las cantidades seleccionadas por el usuario
+                searchTermMedicamentos: '', // Nuevo: para el término de búsqueda de medicamentos
+
+                // Computed property para filtrar medicamentos
+                get filteredMedicamentos() {
+                    if (!this.searchTermMedicamentos) {
+                        return this.inventarioMedicamentos;
+                    }
+                    const searchTerm = this.searchTermMedicamentos.toLowerCase();
+                    return this.inventarioMedicamentos.filter(med => 
+                        med.nombre.toLowerCase().includes(searchTerm)
+                    );
+                },
 
                 // Función para actualizar el select de razas
                 actualizarRazas(modalType, especieSeleccionada) {
@@ -535,6 +559,7 @@ $precio_por_kg = 10000;
                 openVacunarModal(animalId) {
                     this.animalParaVacunar = animalId;
                     this.selectedMedicamentos = {}; // Resetear las cantidades seleccionadas
+                    this.searchTermMedicamentos = ''; // Resetear el término de búsqueda
                     // Asegurar que el modal se muestre
                     this.openModalVacunar = true;
                 },
@@ -575,6 +600,7 @@ $precio_por_kg = 10000;
                             this.openModalVacunar = false; // Cerrar el modal
                             this.animalParaVacunar = null;
                             this.selectedMedicamentos = {};
+                            this.searchTermMedicamentos = ''; // Limpiar búsquedacd
                             setTimeout(() => {
                                 window.location.reload(); // Recargar la página para ver el cambio
                             }, 1500);

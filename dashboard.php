@@ -11,66 +11,74 @@ include 'db.php'; // Asegúrate que la ruta a tu archivo db.php sea correcta
 $nombre = $_SESSION['nombre'];
 $rol = $_SESSION['rol'];
 
-// --- Obtener datos para las tarjetas de resumen (estáticos por ahora, se pueden dinamizar) ---
-// Estas cifras son estáticas en tu HTML actual, las mantendré así por ahora.
-// Para dinamizarlas, necesitarías consultas COUNT(*) a las tablas correspondientes.
+// --- Obtener datos dinámicos para las tarjetas de resumen ---
+$total_animales = 0;
+$total_inventario = 0;
+$total_tareas_pendientes = 0; // Nuevo total para tareas pendientes
+$total_tareas_completadas = 0; // Nuevo total para tareas completadas
 
-// --- Obtener Actividad Reciente Dinámica ---
+try {
+    // Contar animales
+    $stmt_count_animales = $conn->query("SELECT COUNT(*) AS total FROM animales");
+    $result_animales = $stmt_count_animales->fetch(PDO::FETCH_ASSOC);
+    $total_animales = $result_animales['total'];
+
+    // Contar ítems de inventario (distintos ítems, no cantidad total)
+    $stmt_count_inventario = $conn->query("SELECT COUNT(*) AS total FROM inventario");
+    $result_inventario = $stmt_count_inventario->fetch(PDO::FETCH_ASSOC);
+    $total_inventario = $result_inventario['total'];
+
+    // Contar tareas pendientes
+    $sql_pendientes = "SELECT COUNT(*) AS total FROM tareas WHERE completado = 0";
+    $params_pendientes = [];
+    if ($rol === 'veterinario') {
+        $sql_pendientes .= " AND usuario_id = :session_user_id";
+        $params_pendientes[':session_user_id'] = $_SESSION['usuario_id'];
+    }
+    $stmt_count_pendientes = $conn->prepare($sql_pendientes);
+    $stmt_count_pendientes->execute($params_pendientes);
+    $result_pendientes = $stmt_count_pendientes->fetch(PDO::FETCH_ASSOC);
+    $total_tareas_pendientes = $result_pendientes['total'];
+
+    // Contar tareas completadas
+    $sql_completadas = "SELECT COUNT(*) AS total FROM tareas WHERE completado = 1";
+    $params_completadas = [];
+    if ($rol === 'veterinario') {
+        $sql_completadas .= " AND usuario_id = :session_user_id";
+        $params_completadas[':session_user_id'] = $_SESSION['usuario_id'];
+    }
+    $stmt_count_completadas = $conn->prepare($sql_completadas);
+    $stmt_count_completadas->execute($params_completadas);
+    $result_completadas = $stmt_count_completadas->fetch(PDO::FETCH_ASSOC);
+    $total_tareas_completadas = $result_completadas['total'];
+    
+} catch (PDOException $e) {
+    error_log("Error al obtener datos de resumen: " . $e->getMessage());
+    // Los totales se mantendrán en 0 si hay un error
+}
+
+
+// --- Obtener Actividad Reciente Dinámica (Tareas Pendientes y Completadas) ---
 $actividad_reciente = [];
 
 try {
-    // Si el rol NO es veterinario, incluir animales recientemente registrados e inventario.
-    // Los veterinarios solo verán sus tareas.
-    if ($rol !== 'veterinario') {
-        // 1. Obtener animales recientemente registrados
-        $stmt_animales = $conn->query("SELECT id, nombre, fecha_ingreso, 'animal' as tipo_actividad FROM animales ORDER BY fecha_ingreso DESC LIMIT 5");
-        while ($row = $stmt_animales->fetch(PDO::FETCH_ASSOC)) {
-            $actividad_reciente[] = [
-                'descripcion' => 'Nuevo animal registrado',
-                'detalle' => htmlspecialchars($row['nombre']),
-                'fecha' => $row['fecha_ingreso'],
-                'hora' => '', // No hay hora específica para fecha_ingreso
-                'usuario' => '', // No hay usuario directo en la tabla animales para registro
-                'estado' => 'Completado',
-                'icon' => 'bi-egg-fried',
-                'color_class' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-            ];
-        }
-
-        // 3. Obtener elementos de inventario recientemente agregados (asumiendo que fecha_ingreso es la fecha de adición)
-        $stmt_inventario = $conn->query("SELECT id, nombre, fecha_ingreso, 'inventario' as tipo_actividad 
-                                         FROM inventario ORDER BY fecha_ingreso DESC LIMIT 5");
-        while ($row = $stmt_inventario->fetch(PDO::FETCH_ASSOC)) {
-            $actividad_reciente[] = [
-                'descripcion' => 'Nuevo ítem de inventario',
-                'detalle' => htmlspecialchars($row['nombre']),
-                'fecha' => $row['fecha_ingreso'],
-                'hora' => '',
-                'usuario' => '', // No hay usuario directo en la tabla inventario para registro
-                'estado' => 'Completado',
-                'icon' => 'bi-box-seam',
-                'color_class' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-            ];
-        }
-    }
-
-    // 2. Obtener tareas recientes (pendientes y completadas)
-    $sql_tareas = "SELECT t.id, t.descripcion, t.fecha, t.hora, t.completado, u.nombre as nombre_usuario, 'tarea' as tipo_actividad 
-                   FROM tareas t LEFT JOIN usuarios u ON t.usuario_id = u.id";
-    $params_tareas = [];
+    // Obtener tareas (pendientes y completadas)
+    $sql_actividad = "SELECT t.id, t.descripcion, t.fecha, t.hora, t.completado, u.nombre as nombre_usuario, 'tarea' as tipo_actividad 
+                      FROM tareas t LEFT JOIN usuarios u ON t.usuario_id = u.id";
+    $params_actividad = [];
 
     // Si el rol es veterinario, filtrar por sus tareas
     if ($rol === 'veterinario') {
-        $sql_tareas .= " WHERE t.usuario_id = :session_user_id";
-        $params_tareas[':session_user_id'] = $_SESSION['usuario_id'];
+        $sql_actividad .= " WHERE t.usuario_id = :session_user_id";
+        $params_actividad[':session_user_id'] = $_SESSION['usuario_id'];
     }
     
-    $sql_tareas .= " ORDER BY t.fecha DESC, t.hora DESC LIMIT 5";
+    $sql_actividad .= " ORDER BY t.fecha DESC, t.hora DESC LIMIT 5"; // Ordenar por las más recientes primero
 
-    $stmt_tareas = $conn->prepare($sql_tareas);
-    $stmt_tareas->execute($params_tareas);
-    while ($row = $stmt_tareas->fetch(PDO::FETCH_ASSOC)) {
-        $estado_text = $row['completado'] ? 'Completado' : 'Pendiente';
+    $stmt_actividad = $conn->prepare($sql_actividad);
+    $stmt_actividad->execute($params_actividad);
+    while ($row = $stmt_actividad->fetch(PDO::FETCH_ASSOC)) {
+        $estado_text = $row['completado'] ? 'Completada' : 'Pendiente';
         $icon_class = $row['completado'] ? 'bi-list-check' : 'bi-hourglass-split';
         $color_class = $row['completado'] ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
         
@@ -85,17 +93,6 @@ try {
             'color_class' => $color_class
         ];
     }
-
-
-    // Ordenar todas las actividades por fecha y hora (más reciente primero)
-    usort($actividad_reciente, function($a, $b) {
-        $datetimeA = $a['fecha'] . ' ' . ($a['hora'] ? $a['hora'] : '00:00:00');
-        $datetimeB = $b['fecha'] . ' ' . ($b['hora'] ? $b['hora'] : '00:00:00');
-        return strtotime($datetimeB) - strtotime($datetimeA);
-    });
-
-    // Limitar a, por ejemplo, los 5 o 10 elementos más recientes para no sobrecargar
-    $actividad_reciente = array_slice($actividad_reciente, 0, 5);
 
 } catch (PDOException $e) {
     error_log("Error al obtener actividad reciente: " . $e->getMessage());
@@ -216,9 +213,11 @@ try {
                     <a href="./modulos/tareas_veterinario.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
                         <i class="bi bi-list-check mr-1"></i> Tareas
                     </a>
+                    <?php if ($rol !== 'veterinario'): // Solo mostrar si NO es veterinario ?>
                     <a href="reportes.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
                         <i class="bi bi-graph-up mr-1"></i> Reportes
                     </a>
+                    <?php endif; ?>
                 </nav>
             </div>
             
@@ -273,9 +272,11 @@ try {
                 <a href="./modulos/tareas_veterinario.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
                     <i class="bi bi-list-check mr-1"></i> Tareas
                 </a>
+                <?php if ($rol !== 'veterinario'): // Solo mostrar si NO es veterinario ?>
                 <a href="reportes.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
                     <i class="bi bi-graph-up mr-1"></i> Reportes
                 </a>
+                <?php endif; ?>
             </div>
         </div>
     </header>
@@ -302,7 +303,7 @@ try {
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Animales</p>
-                            <h3 class="text-2xl font-bold mt-1">1,248</h3>
+                            <h3 class="text-2xl font-bold mt-1"><?= number_format($total_animales) ?></h3>
                         </div>
                         <div class="p-2 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300">
                             <i class="bi bi-egg-fried text-lg"></i>
@@ -311,7 +312,7 @@ try {
                     <div class="mt-2">
                         <div class="flex items-center text-xs text-green-600 dark:text-green-400">
                             <i class="bi bi-arrow-up-short mr-1"></i>
-                            <span>12% desde ayer</span>
+                            <span>Total de animales</span>
                         </div>
                     </div>
                 </div>
@@ -319,17 +320,35 @@ try {
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft p-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tareas</p>
-                            <h3 class="text-2xl font-bold mt-1">18</h3>
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tareas Pendientes</p>
+                            <h3 class="text-2xl font-bold mt-1"><?= number_format($total_tareas_pendientes) ?></h3>
                         </div>
                         <div class="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-300">
-                            <i class="bi bi-list-check text-lg"></i>
+                            <i class="bi bi-hourglass-split text-lg"></i>
                         </div>
                     </div>
                     <div class="mt-2">
-                        <div class="flex items-center text-xs text-red-600 dark:text-red-400">
-                            <i class="bi bi-arrow-down-short mr-1"></i>
-                            <span>3 nuevas hoy</span>
+                        <div class="flex items-center text-xs text-yellow-600 dark:text-yellow-400">
+                            <i class="bi bi-exclamation-triangle mr-1"></i>
+                            <span>Tareas por completar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tareas Completadas</p>
+                            <h3 class="text-2xl font-bold mt-1"><?= number_format($total_tareas_completadas) ?></h3>
+                        </div>
+                        <div class="p-2 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300">
+                            <i class="bi bi-check-circle text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="flex items-center text-xs text-green-600 dark:text-green-400">
+                            <i class="bi bi-arrow-up-short mr-1"></i>
+                            <span>Tareas finalizadas</span>
                         </div>
                     </div>
                 </div>
@@ -338,7 +357,7 @@ try {
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Inventario</p>
-                            <h3 class="text-2xl font-bold mt-1">7</h3>
+                            <h3 class="text-2xl font-bold mt-1"><?= number_format($total_inventario) ?></h3>
                         </div>
                         <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
                             <i class="bi bi-box-seam text-lg"></i>
@@ -347,88 +366,14 @@ try {
                     <div class="mt-2">
                         <div class="flex items-center text-xs text-yellow-600 dark:text-yellow-400">
                             <i class="bi bi-exclamation-triangle mr-1"></i>
-                            <span>Necesita atención</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Producción</p>
-                            <h3 class="text-2xl font-bold mt-1">542 L</h3>
-                        </div>
-                        <div class="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">
-                            <i class="bi bi-droplet text-lg"></i>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <div class="flex items-center text-xs text-green-600 dark:text-green-400">
-                            <i class="bi bi-arrow-up-short mr-1"></i>
-                            <span>8% desde ayer</span>
+                            <span>Ítems en inventario</span>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Acciones Rápidas</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-                <a href="./modulos/animales.php" class="menu-card animales rounded-xl shadow-soft overflow-hidden no-underline">
-                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
-                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
-                            <i class="bi bi-egg-fried text-green-600 text-2xl"></i>
-                        </div>
-                        <h3 class="text-base font-semibold mb-1 text-gray-800">Animales</h3>
-                        <p class="text-xs text-gray-600">Gestionar ganado</p>
-                    </div>
-                </a>
-                
-                <a href="./modulos/inventario.php" class="menu-card inventario rounded-xl shadow-soft overflow-hidden no-underline">
-                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
-                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
-                            <i class="bi bi-box-seam text-blue-600 text-2xl"></i>
-                        </div>
-                        <h3 class="text-base font-semibold mb-1 text-gray-800">Inventario</h3>
-                        <p class="text-xs text-gray-600">Control de suministros</p>
-                    </div>
-                </a>
-                
-                <a href="./modulos/tareas_veterinario.php" class="menu-card tareas rounded-xl shadow-soft overflow-hidden no-underline">
-                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
-                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
-                            <i class="bi bi-list-check text-yellow-600 text-2xl"></i>
-                        </div>
-                        <h3 class="text-base font-semibold mb-1 text-gray-800">Tareas</h3>
-                        <p class="text-xs text-gray-600">Actividades diarias</p>
-                    </div>
-                </a>
-                
-                <a href="reportes.php" class="menu-card reportes rounded-xl shadow-soft overflow-hidden no-underline">
-                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
-                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
-                            <i class="bi bi-graph-up text-red-600 text-2xl"></i>
-                        </div>
-                        <h3 class="text-base font-semibold mb-1 text-gray-800">Reportes</h3>
-                        <p class="text-xs text-gray-600">Estadísticas</p>
-                    </div>
-                </a>
-                
-                <a href="logout.php" class="menu-card salir rounded-xl shadow-soft overflow-hidden no-underline">
-                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
-                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
-                            <i class="bi bi-box-arrow-right text-gray-600 text-2xl"></i>
-                        </div>
-                        <h3 class="text-base font-semibold mb-1 text-gray-800">Salir</h3>
-                        <p class="text-xs text-gray-600">Cerrar sesión</p>
-                    </div>
-                </a>
-            </div>
-            
+            <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Actividad Reciente</h2>
             <div class="mb-8">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Actividad Reciente</h2>
-                    <a href="#" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Ver todo</a>
-                </div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft overflow-hidden">
                     <div class="divide-y divide-gray-200 dark:divide-gray-700">
                         <?php if (empty($actividad_reciente)): ?>
@@ -467,9 +412,65 @@ try {
                     </div>
                 </div>
             </div>
+
+            <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Acciones Rápidas</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+                <a href="./modulos/animales.php" class="menu-card animales rounded-xl shadow-soft overflow-hidden no-underline">
+                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
+                            <i class="bi bi-egg-fried text-green-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-base font-semibold mb-1 text-gray-800">Animales</h3>
+                        <p class="text-xs text-gray-600">Gestionar ganado</p>
+                    </div>
+                </a>
+                
+                <a href="./modulos/inventario.php" class="menu-card inventario rounded-xl shadow-soft overflow-hidden no-underline">
+                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
+                            <i class="bi bi-box-seam text-blue-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-base font-semibold mb-1 text-gray-800">Inventario</h3>
+                        <p class="text-xs text-gray-600">Control de suministros</p>
+                    </div>
+                </a>
+                
+                <a href="./modulos/tareas_veterinario.php" class="menu-card tareas rounded-xl shadow-soft overflow-hidden no-underline">
+                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
+                            <i class="bi bi-list-check text-yellow-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-base font-semibold mb-1 text-gray-800">Tareas</h3>
+                        <p class="text-xs text-gray-600">Actividades diarias</p>
+                    </div>
+                </a>
+                
+                <?php if ($rol !== 'veterinario'): // Solo mostrar si NO es veterinario ?>
+                <a href="reportes.php" class="menu-card reportes rounded-xl shadow-soft overflow-hidden no-underline">
+                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
+                            <i class="bi bi-graph-up text-red-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-base font-semibold mb-1 text-gray-800">Reportes</h3>
+                        <p class="text-xs text-gray-600">Estadísticas</p>
+                    </div>
+                </a>
+                <?php endif; ?>
+                
+                <a href="logout.php" class="menu-card salir rounded-xl shadow-soft overflow-hidden no-underline">
+                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
+                            <i class="bi bi-box-arrow-right text-gray-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-base font-semibold mb-1 text-gray-800">Salir</h3>
+                        <p class="text-xs text-gray-600">Cerrar sesión</p>
+                    </div>
+                </a>
+            </div>
+            
         </main>
         
-        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6">
+        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 mt-auto">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
                     © <?php echo date('Y'); ?> Granja App - Sistema de Gestión
