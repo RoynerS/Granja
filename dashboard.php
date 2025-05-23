@@ -16,6 +16,7 @@ $total_animales = 0;
 $total_inventario = 0;
 $total_tareas_pendientes = 0; // Nuevo total para tareas pendientes
 $total_tareas_completadas = 0; // Nuevo total para tareas completadas
+$total_usuarios = 0; // Nuevo total para usuarios
 
 try {
     // Contar animales
@@ -51,6 +52,13 @@ try {
     $stmt_count_completadas->execute($params_completadas);
     $result_completadas = $stmt_count_completadas->fetch(PDO::FETCH_ASSOC);
     $total_tareas_completadas = $result_completadas['total'];
+
+    // Contar usuarios (solo para administradores)
+    if ($rol === 'administrador') {
+        $stmt_count_usuarios = $conn->query("SELECT COUNT(*) AS total FROM usuarios");
+        $result_usuarios = $stmt_count_usuarios->fetch(PDO::FETCH_ASSOC);
+        $total_usuarios = $result_usuarios['total'];
+    }
     
 } catch (PDOException $e) {
     error_log("Error al obtener datos de resumen: " . $e->getMessage());
@@ -99,6 +107,9 @@ try {
     // Puedes mostrar un mensaje de error en la UI si lo deseas
 }
 
+// Manejar mensajes de sesión
+$mensaje = isset($_SESSION['mensaje']) ? $_SESSION['mensaje'] : "";
+unset($_SESSION['mensaje']);
 ?>
 
 <!DOCTYPE html>
@@ -109,6 +120,7 @@ try {
     <title>Panel de Control - Granja</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -163,6 +175,9 @@ try {
         .menu-card.reportes {
             background: linear-gradient(135deg, #f8d7da, #f5b5ba);
         }
+        .menu-card.usuarios { /* New style for Users card */
+            background: linear-gradient(135deg, #e0e7ff, #c3daff); /* Light blue/purple gradient */
+        }
         .menu-card.salir {
             background: linear-gradient(135deg, #e2e3e5, #c8cbce);
         }
@@ -190,9 +205,11 @@ try {
             transform: scaleX(1);
             transform-origin: left;
         }
+
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="h-full bg-gray-50 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200 flex flex-col min-h-screen">
+<body x-data="appData()" class="h-full bg-gray-50 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200 flex flex-col min-h-screen">
     <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
         <div class="px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-4">
@@ -218,13 +235,18 @@ try {
                         <i class="bi bi-graph-up mr-1"></i> Reportes
                     </a>
                     <?php endif; ?>
+                    <?php if ($rol === 'administrador'): // Solo mostrar si es administrador ?>
+                    <a href="./modulos/usuarios.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
+                        <i class="bi bi-people mr-1"></i> Usuarios
+                    </a>
+                    <?php endif; ?>
                 </nav>
             </div>
             
             <div class="flex items-center space-x-4">
                 <div class="hidden md:flex items-center space-x-4">
                     <div class="relative">
-                        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none" @click="toggleTheme()">
                             <i class="bi bi-sun-fill text-yellow-500 dark:hidden"></i>
                             <i class="bi bi-moon-fill text-blue-400 hidden dark:inline"></i>
                         </button>
@@ -277,22 +299,40 @@ try {
                     <i class="bi bi-graph-up mr-1"></i> Reportes
                 </a>
                 <?php endif; ?>
+                <?php if ($rol === 'administrador'): // Solo mostrar si es administrador ?>
+                <a href="./modulos/usuarios.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
+                    <i class="bi bi-people mr-1"></i> Usuarios
+                </a>
+                <?php endif; ?>
             </div>
         </div>
     </header>
     
     <div class="min-h-full flex-grow">
         <main class="p-6">
+            <?php if ($mensaje): ?>
+                <div class="mb-4 p-4 text-sm 
+                    <?= strpos($mensaje, 'correctamente') !== false || strpos($mensaje, 'exitosamente') !== false ? 'text-green-700 bg-green-100 dark:bg-green-200 dark:text-green-800' : 'text-red-700 bg-red-100 dark:bg-red-200 dark:text-red-800' ?> 
+                    rounded-lg" role="alert">
+                    <?= htmlspecialchars($mensaje) ?>
+                </div>
+            <?php endif; ?>
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft p-6 mb-6">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div>
                         <h2 class="text-xl font-bold text-gray-800 dark:text-white">Bienvenido, <?php echo htmlspecialchars($nombre); ?></h2>
                         <p class="text-gray-600 dark:text-gray-400">Aquí puedes gestionar todas las actividades de tu granja</p>
                     </div>
-                    <div class="mt-4 md:mt-0">
+                    <div class="mt-4 md:mt-0 flex items-center space-x-3">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
                             <i class="bi bi-person-badge mr-1"></i> <?php echo htmlspecialchars($rol); ?>
                         </span>
+                        <?php if ($rol === 'administrador'): ?>
+                        <button @click="openModalAgregarUsuario = true; resetNewUserForm()" class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
+                            <i class="bi bi-person-plus-fill mr-2"></i>
+                            Agregar Usuario
+                        </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -370,6 +410,26 @@ try {
                         </div>
                     </div>
                 </div>
+
+                <?php if ($rol === 'administrador'): ?>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft p-4 col-span-full sm:col-span-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuarios Registrados</p>
+                            <h3 class="text-2xl font-bold mt-1"><?= number_format($total_usuarios) ?></h3>
+                        </div>
+                        <div class="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">
+                            <i class="bi bi-people text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="flex items-center text-xs text-purple-600 dark:text-purple-400">
+                            <i class="bi bi-info-circle mr-1"></i>
+                            <span>Total de cuentas de usuario</span>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
             
             <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Actividad Reciente</h2>
@@ -456,6 +516,18 @@ try {
                     </div>
                 </a>
                 <?php endif; ?>
+
+                <?php if ($rol === 'administrador'): // Solo mostrar si es administrador ?>
+                <a href="./modulos/usuarios.php" class="menu-card usuarios rounded-xl shadow-soft overflow-hidden no-underline">
+                    <div class="p-4 text-center h-full flex flex-col items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-white bg-opacity-50 flex items-center justify-center mb-3">
+                            <i class="bi bi-people text-purple-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-base font-semibold mb-1 text-gray-800">Usuarios</h3>
+                        <p class="text-xs text-gray-600">Gestionar cuentas</p>
+                    </div>
+                </a>
+                <?php endif; ?>
                 
                 <a href="logout.php" class="menu-card salir rounded-xl shadow-soft overflow-hidden no-underline">
                     <div class="p-4 text-center h-full flex flex-col items-center justify-center">
@@ -484,23 +556,160 @@ try {
         </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <div x-cloak x-show="openModalAgregarUsuario" x-transition class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-agregar-usuario-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="openModalAgregarUsuario" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="openModalAgregarUsuario = false; resetNewUserForm()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div x-show="openModalAgregarUsuario" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form action="procesar_usuario.php" method="POST">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 sm:mx-0 sm:h-10 sm:w-10">
+                                <i class="bi bi-person-plus text-blue-600 dark:text-blue-300"></i>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-agregar-usuario-title">
+                                    Agregar Nuevo Usuario
+                                </h3>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <label for="nombre_usuario_agregar" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre:</label>
+                                        <input type="text" name="nombre" id="nombre_usuario_agregar" x-model="newUser.nombre" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" required>
+                                    </div>
+                                    <div>
+                                        <label for="correo_usuario_agregar" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico:</label>
+                                        <input type="email" name="correo" id="correo_usuario_agregar" x-model="newUser.correo" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" required>
+                                    </div>
+                                    <div>
+                                        <label for="contrasena_usuario_agregar" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña:</label>
+                                        <input type="password" name="contrasena" id="contrasena_usuario_agregar" x-model="newUser.contrasena" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" required>
+                                    </div>
+                                    <div>
+                                        <label for="rol_usuario_agregar" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Rol:</label>
+                                        <select name="rol" id="rol_usuario_agregar" x-model="newUser.rol" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                            <option value="trabajador">Trabajador</option>
+                                            <option value="veterinario">Veterinario</option>
+                                            <option value="administrador">Administrador</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" name="agregar_usuario" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Crear Usuario
+                        </button>
+                        <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="openModalAgregarUsuario = false; resetNewUserForm()">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Dark mode toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        const html = document.documentElement;
-        
-        themeToggle?.addEventListener('click', () => {
-            html.classList.toggle('dark');
-            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('appData', () => ({
+                openModalAgregarUsuario: false, // New state for add user modal
+                newUser: {
+                    nombre: '',
+                    correo: '',
+                    contrasena: '',
+                    rol: 'trabajador' // Default role
+                },
+                // Existing states
+                openModalAgregar: false,
+                openModalEditar: false,
+                openConfirmModal: false,
+                alpineMessage: '', 
+                tareaToDeleteId: null,
+                
+                newTarea: {
+                    descripcion: '',
+                    fecha: new Date().toISOString().slice(0, 10), 
+                    hora: '',
+                    usuario_id: '<?php echo $_SESSION['usuario_id']; ?>', 
+                    animal_id: '', 
+                    completado: '0' 
+                },
+
+                tareaParaEditar: null,
+
+                toggleTheme() {
+                    if (document.documentElement.classList.contains('dark')) {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                    } else {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                    }
+                },
+
+                init() {
+                    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                    // Initialize default date for new task modal if needed
+                    const fechaIngresoAgregarInput = document.getElementById('fecha_ingreso_agregar');
+                    if (fechaIngresoAgregarInput) {
+                        fechaIngresoAgregarInput.value = new Date().toISOString().slice(0, 10);
+                    }
+                },
+
+                resetNewTareaForm() {
+                    this.newTarea = {
+                        descripcion: '',
+                        fecha: new Date().toISOString().slice(0, 10),
+                        hora: '',
+                        usuario_id: '<?php echo $_SESSION['usuario_id']; ?>', 
+                        animal_id: '',
+                        completado: '0'
+                    };
+                },
+                resetNewUserForm() {
+                    this.newUser = {
+                        nombre: '',
+                        correo: '',
+                        contrasena: '',
+                        rol: 'trabajador'
+                    };
+                },
+
+                inicializarFormularioEdicion() {
+                    if (this.tareaParaEditar && this.tareaParaEditar.hora && this.tareaParaEditar.hora.length > 5) {
+                        this.tareaParaEditar.hora = this.tareaParaEditar.hora.slice(0, 5);
+                    }
+                    console.log('Tarea para editar:', this.tareaParaEditar);
+                },
+
+                confirmDelete(id) {
+                    this.tareaToDeleteId = id;
+                    this.openConfirmModal = true;
+                },
+
+                deleteConfirmed() {
+                    if (this.tareaToDeleteId) {
+                        window.location.href = `eliminar_tarea.php?id=${this.tareaToDeleteId}`;
+                    }
+                },
+                
+                formatDate(dateString) {
+                    if (!dateString) return '';
+                    try {
+                        const date = new Date(dateString);
+                        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+                        return date.toLocaleDateString('es-ES', options);
+                    } catch (e) {
+                        console.error("Error formatting date:", dateString, e);
+                        return dateString;
+                    }
+                }
+            }));
         });
-        
-        // Check for saved theme preference
-        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            html.classList.add('dark');
-        } else {
-            html.classList.remove('dark');
-        }
     </script>
 </body>
 </html>
