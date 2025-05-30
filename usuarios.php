@@ -540,45 +540,16 @@ try {
             
             <div class="flex items-center space-x-4">
                 <div class="hidden md:flex items-center space-x-4">
-                    <div class="w-4 h-4 rounded-full bg-blue-500 dark:bg-purple-500 transition-colors duration-200" title="Modo actual"></div>
-                    <div class="relative">
                         <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none" @click="toggleTheme()">
                             <i class="bi bi-sun-fill text-yellow-500 dark:hidden"></i>
                             <i class="bi bi-moon-fill text-blue-400 hidden dark:inline"></i>
                         </button>
                     </div>
                     
-                    <div class="flex items-center bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                        <i class="bi bi-calendar mr-2 text-gray-500 dark:text-gray-300"></i>
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-200"><?php echo date('d/m/Y'); ?></span>
-                    </div>
+                    
                 </div>
                 
-                <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" class="flex items-center space-x-2 focus:outline-none">
-                        <div class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
-                            <?php echo strtoupper(substr($nombre_usuario_sesion, 0, 1)); // Muestra la primera letra del nombre ?>
-                        </div>
-                        <span class="hidden md:inline text-sm font-medium"><?php echo htmlspecialchars($nombre_usuario_sesion); ?></span>
-                    </button>
-                    
-                    <div x-show="open" @click.away="open = false" 
-                          class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50">
-                        <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                            <p class="text-sm font-medium text-gray-900 dark:text-white"><?php echo htmlspecialchars($nombre_usuario_sesion); ?></p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400"><?php echo htmlspecialchars($rol_usuario_sesion); ?></p>
-                        </div>
-                        <a href="dashboard.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <i class="bi bi-speedometer2 mr-2"></i> Dashboard
-                        </a>
-                        <a href="reportes.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <i class="bi bi-bar-chart-line mr-2"></i> Reportes
-                        </a>
-                        <a href="logout.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <i class="bi bi-box-arrow-right mr-2"></i> Cerrar sesión
-                        </a>
-                    </div>
-                </div>
+                
             </div>
         </div>
     </header>
@@ -807,15 +778,17 @@ try {
         </div>
     </div>
 
-    <footer class="bg-white dark:bg-gray-800 shadow-inner py-4 mt-8">
-        <div class="container mx-auto px-6 text-center text-gray-500">
-            <p>&copy; <?php echo date('Y'); ?> Granja. Todos los derechos reservados.</p>
-            <p class="text-xs mt-1">Desarrollado con <i class="bi bi-heart-fill text-red-500"></i> para una gestión eficiente.</p>
-            <div class="flex justify-center space-x-4 mt-2">
-                <a href="#" class="text-gray-500 hover:text-primary-600 dark:hover:text-primary-400">Política de Privacidad</a>
-                <a href="#" class="text-gray-500 hover:text-primary-600 dark:hover:text-primary-400">Términos de Servicio</a>
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 mt-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
+                    © <?php echo date('Y'); ?> Granja App - Sistema de Gestión
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Términos</a>
+                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Privacidad</a>
+                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Ayuda</a>
+                </div>
             </div>
-        </div>
-    </footer>
+        </footer>
 </body>
 </html>

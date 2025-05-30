@@ -133,6 +133,7 @@ function getNombreCategoria($tipo) {
                         </div>
                     </div>
                 </div>
+                
             </div>
         </header>
         
