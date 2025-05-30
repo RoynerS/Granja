@@ -11,7 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $descripcion = $_POST['descripcion'];
     $fecha = $_POST['fecha'];
     $hora = $_POST['hora'];
-    $usuario_id = $_POST['usuario_id'];
+    $usuario_id = $_POST['usuario_id']; // This will now refer to any user/worker
     $animal_id = isset($_POST['animal_id']) && $_POST['animal_id'] !== '' ? $_POST['animal_id'] : null;
     $completado = $_POST['completado'];
 
@@ -31,6 +31,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['mensaje'] = "Error al actualizar la tarea: " . $e->getMessage();
     }
 }
-header("Location: tareas_veterinario.php");
+header("Location: tareas_veterinario.php"); // Consider renaming this redirection for clarity
 exit();
 ?>

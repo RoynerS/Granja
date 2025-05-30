@@ -72,8 +72,10 @@ if (!$tarea_info) {
 
 // Validar permisos y estado:
 // 1. Administrador puede marcar cualquier tarea.
-// 2. Veterinario solo puede marcar sus propias tareas Y si la tarea está pendiente.
-if ($user_rol === 'administrador' || ($user_rol === 'veterinario' && $tarea_info['usuario_id'] == $user_id && $tarea_info['completado'] == 0)) {
+// 2. Cualquier otro rol asignado a la tarea puede marcar sus propias tareas Y si la tarea está pendiente.
+// MODIFICACIÓN CRÍTICA AQUÍ: Ajusta los roles que pueden completar sus propias tareas.
+if ($user_rol === 'administrador' || 
+    (($user_rol === 'veterinario' || $user_rol === 'trabajador' || $user_rol === 'enfermero') && $tarea_info['usuario_id'] == $user_id && $tarea_info['completado'] == 0)) {
     // Si la tarea ya está completada, no hacer nada y devolver éxito
     if ($tarea_info['completado'] == 1) {
         $response['success'] = true;

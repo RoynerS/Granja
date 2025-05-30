@@ -236,10 +236,13 @@ unset($_SESSION['mensaje']);
                     </a>
                     <?php endif; ?>
                     <?php if ($rol === 'administrador'): // Solo mostrar si es administrador ?>
-                    <a href="./modulos/usuarios.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
+                    <a href="usuarios.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
                         <i class="bi bi-people mr-1"></i> Usuarios
                     </a>
                     <?php endif; ?>
+                    <a href="./landing_page.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
+                        <i class="bi bi-list-check mr-1"></i> Animales - Venta
+                    </a>
                 </nav>
             </div>
             
@@ -328,10 +331,10 @@ unset($_SESSION['mensaje']);
                             <i class="bi bi-person-badge mr-1"></i> <?php echo htmlspecialchars($rol); ?>
                         </span>
                         <?php if ($rol === 'administrador'): ?>
-                        <button @click="openModalAgregarUsuario = true; resetNewUserForm()" class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
+                        <!-- <button @click="openModalAgregarUsuario = true; resetNewUserForm()" class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
                             <i class="bi bi-person-plus-fill mr-2"></i>
                             Agregar Usuario
-                        </button>
+                        </button> -->
                         <?php endif; ?>
                     </div>
                 </div>
