@@ -232,7 +232,7 @@ unset($_SESSION['mensaje']);
                     </a>
                     <?php if ($rol === 'administrador'): // Solo mostrar si NO es veterinario ?>
                     <a href="reportes.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
-                        <i class="bi bi-graph-up mr-1"></i> Reportes
+                        <i class="bi bi-graph-up mr-1"></i> Graficas
                     </a>
                     <?php endif; ?>
                     <?php if ($rol === 'administrador'): // Solo mostrar si es administrador ?>
@@ -286,25 +286,25 @@ unset($_SESSION['mensaje']);
         <div class="md:hidden bg-gray-50 dark:bg-gray-700 px-4 py-2">
             <div class="flex space-x-4 overflow-x-auto">
                 <a href="#" class="nav-link px-2 py-1 text-sm font-medium text-primary-600 dark:text-primary-400 whitespace-nowrap active">
-                    <i class="bi bi-speedometer2 mr-1"></i> Inicio
+                    <i class="bi bi-speedometer2 mr-1"></i>     
                 </a>
                 <a href="./modulos/animales.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
-                    <i class="bi bi-egg-fried mr-1"></i> Animales
+                    <i class="bi bi-egg-fried mr-1"></i> 
                 </a>
                 <a href="./modulos/inventario.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
-                    <i class="bi bi-box-seam mr-1"></i> Inventario
+                    <i class="bi bi-box-seam mr-1"></i> 
                 </a>
                 <a href="./modulos/tareas_veterinario.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
-                    <i class="bi bi-list-check mr-1"></i> Tareas
+                    <i class="bi bi-list-check mr-1"></i> 
                 </a>
                 <?php if ($rol !== 'veterinario'): // Solo mostrar si NO es veterinario ?>
                 <a href="reportes.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
-                    <i class="bi bi-graph-up mr-1"></i> Reportes
+                    <i class="bi bi-graph-up mr-1"></i> 
                 </a>
                 <?php endif; ?>
                 <?php if ($rol === 'administrador'): // Solo mostrar si es administrador ?>
-                <a href="./modulos/usuarios.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
-                    <i class="bi bi-people mr-1"></i> Usuarios
+                <a href="usuarios.php" class="nav-link px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:text-primary-600 dark:hover:text-primary-400">
+                    <i class="bi bi-people mr-1"></i> 
                 </a>
                 <?php endif; ?>
             </div>
@@ -545,18 +545,7 @@ unset($_SESSION['mensaje']);
             
         </main>
         
-        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 mt-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
-                    © <?php echo date('Y'); ?> Granja App - Sistema de Gestión
-                </div>
-                <div class="flex space-x-4">
-                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Términos</a>
-                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Privacidad</a>
-                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Ayuda</a>
-                </div>
-            </div>
-        </footer>
+        
     </div>
 
     <div x-cloak x-show="openModalAgregarUsuario" x-transition class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-agregar-usuario-title" role="dialog" aria-modal="true">
@@ -611,6 +600,18 @@ unset($_SESSION['mensaje']);
             </div>
         </div>
     </div>
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 mt-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
+                    © <?php echo date('Y'); ?> LA GRNAJA DE RORON - Todos los derechos reservados.
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Términos</a>
+                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Privacidad</a>
+                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Ayuda</a>
+                </div>
+            </div>
+        </footer>
 
     <script>
         document.addEventListener('alpine:init', () => {

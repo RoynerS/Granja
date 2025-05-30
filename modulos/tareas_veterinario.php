@@ -589,31 +589,35 @@ unset($_SESSION['mensaje']);
                 },
 
                 async deleteTask() {
-                    try {
-                        const response = await fetch('eliminar_tarea.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ id: this.tareaParaEliminarId })
-                        });
+    try {
+        const response = await fetch('eliminar_tarea.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                id: this.tareaParaEliminarId 
+            })
+        });
 
-                        const result = await response.json();
+        const result = await response.json();
 
-                        if (result.success) {
-                            alert('Tarea eliminada exitosamente.');
-                            window.location.reload(); // Recargar la página para actualizar las tablas
-                        } else {
-                            alert('Error al eliminar la tarea: ' + result.message);
-                        }
-                    } catch (error) {
-                        console.error('Error al enviar la solicitud:', error);
-                        alert('Hubo un error de conexión al intentar eliminar la tarea.');
-                    } finally {
-                        this.openModalEliminar = false;
-                        this.tareaParaEliminarId = null;
-                    }
-                },
+        if (result.success) {
+             window.location.reload(); // Recargar la página para actualizar las tablas
+            this.showNotification('success', result.message);
+            // Recargar solo la tabla en lugar de toda la página
+            this.fetchTasks(); 
+        } else {
+            this.showNotification('error', result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        this.showNotification('error', 'Error de conexión');
+    } finally {
+        this.openModalEliminar = false;
+        this.tareaParaEliminarId = null;
+    }
+},
 
                 async markAsCompleted(taskId) {
                     if (!confirm('¿Estás seguro de que quieres marcar esta tarea como completada?')) {
@@ -621,7 +625,7 @@ unset($_SESSION['mensaje']);
                     }
 
                     try {
-                        const response = await fetch('marcar_completada.php', {
+                        const response = await fetch('marcar_tareacompletada.php', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

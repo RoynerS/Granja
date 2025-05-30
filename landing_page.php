@@ -59,7 +59,7 @@ $nombre_usuario = $usuario_logueado ? htmlspecialchars($_SESSION['nombre']) : ''
         <div class="px-6 py-4 flex justify-between items-center">
             <div class="flex items-center">
                 <a href="landing_page.php" class="text-2xl font-bold text-primary-600 dark:text-primary-400 flex items-center">
-                    <i class="bi bi-shop-window mr-2"></i> Granja Marketplace
+                    <i class="bi bi-shop-window mr-2"></i> LA GRANJA DE RORON
                 </a>
             </div>
             
@@ -152,7 +152,7 @@ $nombre_usuario = $usuario_logueado ? htmlspecialchars($_SESSION['nombre']) : ''
     <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6 px-6 mt-auto">
         <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
             <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
-                © <?php echo date('Y'); ?> Granja App - Todos los derechos reservados.
+                © <?php echo date('Y'); ?> LA GRNAJA DE RORON - Todos los derechos reservados.
             </div>
             <div class="flex space-x-4">
                 <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Términos de Servicio</a>

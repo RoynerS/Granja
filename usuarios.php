@@ -161,34 +161,34 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $stmt = $conn->prepare("DELETE FROM tareas WHERE usuario_id = ?");
                 $stmt->execute([$id]);
 
-                // 2. Obtener los IDs de los animales asociados a este usuario
-                $stmt_animal_ids = $conn->prepare("SELECT id FROM animales WHERE usuario_id = ?");
-                $stmt_animal_ids->execute([$id]);
-                $animal_ids = $stmt_animal_ids->fetchAll(PDO::FETCH_COLUMN);
+                // // 2. Obtener los IDs de los animales asociados a este usuario
+                // $stmt_animal_ids = $conn->prepare("SELECT id FROM animales WHERE usuario_id = ?");
+                // $stmt_animal_ids->execute([$id]);
+                // $animal_ids = $stmt_animal_ids->fetchAll(PDO::FETCH_COLUMN);
 
-                // Si hay animales asociados, eliminar sus registros relacionados en otras tablas
-                if (!empty($animal_ids)) {
-                    // Crear placeholders para la cláusula IN de SQL
-                    $placeholders = implode(',', array_fill(0, count($animal_ids), '?'));
+                // // Si hay animales asociados, eliminar sus registros relacionados en otras tablas
+                // if (!empty($animal_ids)) {
+                //     // Crear placeholders para la cláusula IN de SQL
+                //     $placeholders = implode(',', array_fill(0, count($animal_ids), '?'));
 
-                    // 3. Eliminar registros de la tabla `vacunas` asociados a los animales del usuario
-                    $stmt = $conn->prepare("DELETE FROM vacunas WHERE animal_id IN ($placeholders)");
-                    $stmt->execute($animal_ids);
+                //     // 3. Eliminar registros de la tabla `vacunas` asociados a los animales del usuario
+                //     $stmt = $conn->prepare("DELETE FROM vacunas WHERE animal_id IN ($placeholders)");
+                //     $stmt->execute($animal_ids);
 
-                    // 4. Eliminar registros de la tabla `produccion` asociados a los animales del usuario
-                    $stmt = $conn->prepare("DELETE FROM produccion WHERE animal_id IN ($placeholders)");
-                    $stmt->execute($animal_ids);
+                //     // 4. Eliminar registros de la tabla `produccion` asociados a los animales del usuario
+                //     $stmt = $conn->prepare("DELETE FROM produccion WHERE animal_id IN ($placeholders)");
+                //     $stmt->execute($animal_ids);
 
-                    // 5. Eliminar registros de la tabla `tareas` asociados a los animales del usuario (si no se eliminaron ya por usuario_id)
-                    // Esto es importante si una tarea está asociada a un animal y no directamente al usuario que se elimina,
-                    // pero el animal pertenece a ese usuario.
-                    $stmt = $conn->prepare("DELETE FROM tareas WHERE animal_id IN ($placeholders)");
-                    $stmt->execute($animal_ids);
+                //     // 5. Eliminar registros de la tabla `tareas` asociados a los animales del usuario (si no se eliminaron ya por usuario_id)
+                //     // Esto es importante si una tarea está asociada a un animal y no directamente al usuario que se elimina,
+                //     // pero el animal pertenece a ese usuario.
+                //     $stmt = $conn->prepare("DELETE FROM tareas WHERE animal_id IN ($placeholders)");
+                //     $stmt->execute($animal_ids);
 
-                    // 6. Eliminar registros de la tabla `animales` asociados a este usuario
-                    $stmt = $conn->prepare("DELETE FROM animales WHERE usuario_id = ?");
-                    $stmt->execute([$id]);
-                }
+                //     // 6. Eliminar registros de la tabla `animales` asociados a este usuario
+                //     $stmt = $conn->prepare("DELETE FROM animales WHERE usuario_id = ?");
+                //     $stmt->execute([$id]);
+                // }
 
                 // 7. Finalmente, eliminar el usuario de la tabla `usuarios`
                 $stmt = $conn->prepare("DELETE FROM usuarios WHERE id = ?");
@@ -659,6 +659,7 @@ try {
                                             <option value="trabajador">Trabajador</option>
                                             <option value="administrador">Administrador</option>
                                             <option value="veterinario">veterinario</option>
+                                            <option value="">Usuario</option>
                                         </select>
                                     </div>
                                 </div>
@@ -725,6 +726,7 @@ try {
                                             <option value="trabajador">Trabajador</option>
                                             <option value="administrador">Administrador</option>
                                             <option value="veterinario">veterinario</option>
+                                            <option value="">Usuario</option>
                                         </select>
                                     </div>
                                 </div>
@@ -760,7 +762,7 @@ try {
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    ¿Estás seguro de que quieres eliminar este usuario? Esta acción es irreversible y eliminará todos los datos asociados (tareas, animales, vacunas, producción).
+                                    ¿Estás seguro de que quieres eliminar este usuario? Esta acción es irreversible y eliminará todos los datos asociados (tareas).
                                 </p>
                             </div>
                         </div>
@@ -778,17 +780,5 @@ try {
         </div>
     </div>
 
-    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 mt-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
-                    © <?php echo date('Y'); ?> Granja App - Sistema de Gestión
-                </div>
-                <div class="flex space-x-4">
-                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Términos</a>
-                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Privacidad</a>
-                    <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Ayuda</a>
-                </div>
-            </div>
-        </footer>
 </body>
 </html>
