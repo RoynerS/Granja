@@ -221,9 +221,11 @@ $precio_por_kg = 10000;
                                             <button type="button" @click="openModalEditar = true; animalParaEditar = JSON.parse('<?= htmlspecialchars(json_encode($animal), ENT_QUOTES, 'UTF-8') ?>'); inicializarFormularioEdicion();" class="text-yellow-600 dark:text-yellow-400 hover:text-yellow-900 dark:hover:text-yellow-500">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
+                                            <?php if ($user_rol === 'administrador' || $user_rol === 'veterinario'): ?>
                                             <a href="eliminar_animal.php?id=<?= $animal['id'] ?>" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-500" onclick="return confirm('¿Estás seguro de eliminar este animal?')">
                                                 <i class="bi bi-trash"></i>
                                             </a>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>

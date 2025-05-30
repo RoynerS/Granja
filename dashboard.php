@@ -230,7 +230,7 @@ unset($_SESSION['mensaje']);
                     <a href="./modulos/tareas_veterinario.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
                         <i class="bi bi-list-check mr-1"></i> Tareas
                     </a>
-                    <?php if ($rol !== 'veterinario'): // Solo mostrar si NO es veterinario ?>
+                    <?php if ($rol === 'administrador'): // Solo mostrar si NO es veterinario ?>
                     <a href="reportes.php" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400">
                         <i class="bi bi-graph-up mr-1"></i> Reportes
                     </a>

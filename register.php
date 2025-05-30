@@ -7,7 +7,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = $_POST['nombre'];
     $correo = $_POST['correo'];
     $contrasena = $_POST['contrasena'];
-    $rol = $_POST['rol'];
+    
+    // Asignar el rol por defecto (por ejemplo, 'cliente', 'usuario', 'paciente', etc.)
+    $rol = 'cliente'; // <--- Rol por defecto asignado aquí
 
     // Verificar si el correo ya está registrado
     $verificar = $conn->prepare("SELECT id FROM usuarios WHERE correo = :correo");
@@ -25,10 +27,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bindParam(':nombre', $nombre);
         $stmt->bindParam(':correo', $correo);
         $stmt->bindParam(':contrasena', $contrasena_hash);
-        $stmt->bindParam(':rol', $rol);
+        $stmt->bindParam(':rol', $rol); // Usar el rol por defecto
 
         if ($stmt->execute()) {
             $mensaje = "Usuario registrado correctamente. Ahora puedes <a href='login.php' class='text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-500 font-medium'>Iniciar sesión</a>";
+            // Redirigir al usuario al login después de un registro exitoso
+            header("Location: login.php");
+            exit(); // Es importante llamar a exit() después de un header()
         } else {
             $mensaje = "Error al registrar usuario.";
         }
@@ -46,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
         tailwind.config = {
-            darkMode: 'class', // Enable dark mode based on the 'dark' class in HTML
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -111,20 +116,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <i class="bi bi-lock text-gray-400"></i>
                     </div>
                     <input type="password" name="contrasena" id="contrasena" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" required autocomplete="new-password">
-                </div>
-            </div>
-            
-            <div>
-                <label for="rol" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rol:</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="bi bi-person-badge text-gray-400"></i>
-                    </div>
-                    <select name="rol" id="rol" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                        <option value="trabajador">Trabajador</option>
-                        <option value="veterinario">Veterinario</option>
-                        <option value="administrador">Administrador</option>
-                    </select>
                 </div>
             </div>
             

@@ -1,4 +1,5 @@
 <?php
+session_start(); // Inicia la sesión de PHP al principio del script
 include 'db.php'; // Asegúrate que la ruta a tu archivo db.php sea correcta
 
 $animales = [];
@@ -16,6 +17,10 @@ try {
     // En un entorno de producción, podrías mostrar un mensaje más amigable al usuario
     // o simplemente no mostrar animales si hay un error.
 }
+
+$rol = $_SESSION['rol'];
+$usuario_logueado = isset($_SESSION['usuario_id']);
+$nombre_usuario = $usuario_logueado ? htmlspecialchars($_SESSION['nombre']) : '';
 ?>
 
 <!DOCTYPE html>
@@ -59,13 +64,38 @@ try {
             </div>
             
             <div class="flex items-center space-x-4">
+                 
+               <?php if ($usuario_logueado): ?>
+    <span class="text-lg font-medium text-gray-700 dark:text-gray-300">Hola, <?= $nombre_usuario ?></span>
+
+    <?php
+    // Asegúrate de que $user_rol esté definido, por ejemplo, al principio del script:
+    // $user_rol = isset($_SESSION['user_rol']) ? $_SESSION['user_rol'] : '';
+    ?>
+
+    <?php if ($rol === 'administrador' || $rol === 'veterinario' || $rol === 'trabajador' ) :  // Aquí el 'if' anidado ?>
+        <a href="dashboard.php" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center">
+            <i class="bi bi-person-fill-gear mr-2"></i> Ir al Panel Admin
+        </a>
+    <?php endif; ?>
+
+    <a href="logout.php" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center">
+        <i class="bi bi-box-arrow-right mr-2"></i> Cerrar Sesión
+    </a>
+
+<?php else: ?>
+    <a href="login.php" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 flex items-center">
+        <i class="bi bi-box-arrow-in-right mr-2"></i> Iniciar Sesión
+    </a>
+    <a href="registrar.php" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 flex items-center">
+        <i class="bi bi-person-plus mr-2"></i> Registrar
+    </a>
+<?php endif; ?>
+
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
                     <i class="bi bi-sun-fill text-yellow-500 dark:hidden"></i>
                     <i class="bi bi-moon-fill text-blue-400 hidden dark:inline"></i>
                 </button>
-                <a href="login.php" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200">
-                    Iniciar Sesión
-                </a>
             </div>
         </div>
     </header>

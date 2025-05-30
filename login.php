@@ -21,7 +21,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['nombre'] = $usuario['nombre'];
             $_SESSION['rol'] = $usuario['rol'];
-            header("Location: dashboard.php");
+            if ($usuario['rol'] === '') {
+                header("Location: landing_page.php"); 
+            } else {
+                header("Location: dashboard.php");
+            }
             exit(); // Es importante usar exit() después de un header Location
         } else {
             $mensaje = "Correo o contraseña incorrectos.";
