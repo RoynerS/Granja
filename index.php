@@ -21,7 +21,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['nombre'] = $usuario['nombre'];
             $_SESSION['rol'] = $usuario['rol'];
-            header("Location: dashboard.php");
+            if ($usuario['rol'] === '') {
+                header("Location: landing_page.php"); 
+            } else {
+                header("Location: dashboard.php");
+            }
             exit(); // Es importante usar exit() después de un header Location
         } else {
             $mensaje = "Correo o contraseña incorrectos.";
@@ -33,6 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="es" class="h-full">
 <head>
@@ -43,11 +48,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
         tailwind.config = {
-            darkMode: 'class', // Habilitar modo oscuro basado en la clase 'dark' en el HTML
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d' },
+                        primary: { 
+                            50: '#f0fdf4', 
+                            100: '#dcfce7', 
+                            200: '#bbf7d0', 
+                            300: '#86efac', 
+                            400: '#4ade80', 
+                            500: '#22c55e', 
+                            600: '#16a34a', 
+                            700: '#15803d', 
+                            800: '#166534', 
+                            900: '#14532d',
+                            DEFAULT: '#22c55e' // Añadido color DEFAULT para mejor consistencia
+                        },
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -55,6 +72,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     boxShadow: {
                         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.08)',
                         'soft-lg': '0 10px 30px -3px rgba(0, 0, 0, 0.12)',
+                        'inner-xl': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'float': 'float 3s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' }
+                        }
                     }
                 }
             }
@@ -62,62 +94,93 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Mejor transición para modo oscuro */
+        body {
+            transition: background-color 0.3s ease, color 0.2s ease;
+        }
+        
+        /* Suavizar transiciones de inputs */
+        input, button {
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
-<body class="h-full bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 transition-colors duration-200 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft-lg p-8 w-full max-w-md">
-        <div class="text-center mb-6">
-            <div class="flex items-center justify-center w-16 h-16 mx-auto rounded-full bg-primary-100 dark:bg-primary-900 mb-4">
-                <i class="bi bi-person-fill text-primary-600 dark:text-primary-300 text-3xl"></i>
+<body class="h-full bg-gray-50 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 flex items-center justify-center p-4">
+    <!-- Contenedor principal con animación de entrada -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft-lg p-8 w-full max-w-md animate-fade-in">
+        <!-- Logo con animación sutil -->
+        <div class="text-center mb-8 animate-fade-in">
+            <div class="flex items-center justify-center w-20 h-20 mx-auto rounded-full bg-primary-100 dark:bg-primary-900/50 mb-4 shadow-inner-xl animate-float">
+                <i class="bi bi-tree-fill text-primary-600 dark:text-primary-300 text-4xl"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Iniciar Sesión</h2>
-            <p class="text-gray-500 dark:text-gray-400">Accede a tu cuenta de Granja App</p>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Bienvenido a Granja App</h2>
+            <p class="text-gray-500 dark:text-gray-400">Gestiona tu granja de manera eficiente</p>
         </div>
 
-        <?php if ($mensaje): ?>
-            <div class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
-                <?= htmlspecialchars($mensaje) ?>
-            </div>
-        <?php endif; ?>
 
-        <form method="POST" class="space-y-5">
+        <form method="POST" class="space-y-6">
             <div>
-                <label for="correo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Correo Electrónico:</label>
+                <label for="correo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Correo Electrónico</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="bi bi-envelope text-gray-400"></i>
                     </div>
-                    <input type="email" name="correo" id="correo" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" required autocomplete="email">
+                    <input type="email" name="correo" id="correo" 
+                           class="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm placeholder-gray-400 dark:placeholder-gray-500" 
+                           placeholder="tu@email.com" 
+                           required 
+                           autocomplete="email">
                 </div>
             </div>
 
             <div>
-                <label for="contrasena" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña:</label>
+                <label for="contrasena" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contraseña</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="bi bi-lock text-gray-400"></i>
                     </div>
-                    <input type="password" name="contrasena" id="contrasena" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" required autocomplete="current-password">
+                    <input type="password" name="contrasena" id="contrasena" 
+                           class="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm placeholder-gray-400 dark:placeholder-gray-500" 
+                           placeholder="••••••••" 
+                           required 
+                           autocomplete="current-password">
                 </div>
             </div>
             
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
-                <i class="bi bi-box-arrow-in-right mr-2"></i> Entrar
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded">
+                    <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Recordarme</label>
+                </div>
+                
+                <div class="text-sm">
+                    <a href="#" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">¿Olvidaste tu contraseña?</a>
+                </div>
+            </div>
+            
+            <button type="submit" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-md">
+                <i class="bi bi-box-arrow-in-right mr-2"></i> Iniciar Sesión
             </button>
         </form>
 
-        <div class="mt-6 text-center">
-            <a href="#" class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-500">¿Olvidaste tu contraseña?</a>
+        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                ¿No tienes una cuenta? 
+                <a href="./register.php" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">Regístrate</a>
+            </p>
         </div>
     </div>
 
-    <button id="theme-toggle" class="fixed bottom-4 right-4 p-3 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-lg focus:outline-none transition-colors duration-200">
+    <!-- Botón de tema con mejor diseño -->
+    <button id="theme-toggle" type="button" class="fixed bottom-6 right-6 p-3 rounded-full bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 shadow-lg hover:shadow-xl focus:outline-none transition-all duration-300 hover:scale-110 border border-gray-200 dark:border-gray-600">
         <i class="bi bi-sun-fill text-yellow-500 dark:hidden"></i>
         <i class="bi bi-moon-fill text-blue-400 hidden dark:inline"></i>
+        <span class="sr-only">Cambiar tema</span>
     </button>
 
     <script>
-        // Script para manejar el modo oscuro
+        // Script para manejar el modo oscuro (mejorado)
         const themeToggle = document.getElementById('theme-toggle');
         const html = document.documentElement;
 
@@ -125,30 +188,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         function applyTheme(theme) {
             if (theme === 'dark') {
                 html.classList.add('dark');
+                document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#111827');
             } else {
                 html.classList.remove('dark');
+                document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f9fafb');
             }
             localStorage.setItem('theme', theme);
         }
 
-        // Cargar el tema guardado o detectar la preferencia del sistema
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            applyTheme(savedTheme);
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            applyTheme('dark');
-        } else {
-            applyTheme('light');
+        // Verificar tema al cargar
+        function checkTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else if (systemPrefersDark) {
+                applyTheme('dark');
+            } else {
+                applyTheme('light');
+            }
+            
+            // Añadir meta tag para color de tema en móviles
+            if (!document.querySelector('meta[name="theme-color"]')) {
+                const meta = document.createElement('meta');
+                meta.name = 'theme-color';
+                meta.content = html.classList.contains('dark') ? '#111827' : '#f9fafb';
+                document.head.appendChild(meta);
+            }
         }
 
-        // Escuchar el evento click del botón de alternar tema
-        themeToggle.addEventListener('click', () => {
-            if (html.classList.contains('dark')) {
-                applyTheme('light');
-            } else {
-                applyTheme('dark');
+        // Escuchar cambios en la preferencia del sistema
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (!localStorage.getItem('theme')) {
+                applyTheme(e.matches ? 'dark' : 'light');
             }
         });
+
+        // Alternar tema manualmente
+        themeToggle.addEventListener('click', () => {
+            const isDark = html.classList.contains('dark');
+            applyTheme(isDark ? 'light' : 'dark');
+        });
+
+        // Inicializar tema al cargar
+        document.addEventListener('DOMContentLoaded', checkTheme);
     </script>
 </body>
 </html>
