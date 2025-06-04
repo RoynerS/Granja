@@ -7,11 +7,24 @@ if (!isset($_SESSION['usuario_id'])) {
 
 include '../db.php';
 
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-    $stmt = $conn->prepare("SELECT * FROM inventario WHERE id = :id");
-    $stmt->execute(['id' => $id]);
-    $producto = $stmt->fetch(PDO::FETCH_ASSOC);
+// Obtener el ID del producto a editar (de POST en lugar de GET)
+$id = isset($_POST['id']) ? $_POST['id'] : (isset($_GET['id']) ? $_GET['id'] : null);
+
+if (!$id) {
+    $_SESSION['mensaje'] = "ID de producto no proporcionado";
+    header("Location: inventario.php");
+    exit();
+}
+
+// Obtener los datos actuales del producto para mostrar en el formulario
+$stmt = $conn->prepare("SELECT * FROM inventario WHERE id = :id");
+$stmt->execute(['id' => $id]);
+$producto = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$producto) {
+    $_SESSION['mensaje'] = "Producto no encontrado";
+    header("Location: inventario.php");
+    exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -35,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
 
     $_SESSION['mensaje'] = "Producto actualizado correctamente";
-    header("Location: inventario.php");
+    header("Location: inventario.php?tipo=" . urlencode($tipo));
     exit();
 }
 ?>
@@ -51,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container mt-5">
         <h2>Editar Producto</h2>
         <form action="" method="POST">
+            <input type="hidden" name="id" value="<?= htmlspecialchars($producto['id']) ?>">
             <div class="mb-3">
                 <label class="form-label">Nombre:</label>
                 <input type="text" name="nombre" class="form-control" value="<?= htmlspecialchars($producto['nombre']) ?>" required>
@@ -69,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="fertilizante" <?= $producto['tipo'] == 'fertilizante' ? 'selected' : '' ?>>Fertilizante</option>
                     <option value="equipo" <?= $producto['tipo'] == 'equipo' ? 'selected' : '' ?>>Equipo</option>
                     <option value="otro" <?= $producto['tipo'] == 'otro' ? 'selected' : '' ?>>Otro</option>
+                    <option value="produccion" <?= $producto['tipo'] == 'produccion' ? 'selected' : '' ?>>Produccion</option>
                 </select>
             </div>
             <div class="mb-3">

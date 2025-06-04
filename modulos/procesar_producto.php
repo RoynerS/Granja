@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cantidad = $_POST['cantidad'];
     $precio = $_POST['precio'];
     $fecha_ingreso = $_POST['fecha_ingreso'];
-    $tipo = $_POST['tipo']; // Nuevo campo para la categoría
+    $tipo = $_POST['tipo'];
 
     // Insertar el nuevo producto en la base de datos
     $stmt = $conn->prepare("INSERT INTO inventario (nombre, descripcion, cantidad, precio, fecha_ingreso, tipo) VALUES (:nombre, :descripcion, :cantidad, :precio, :fecha_ingreso, :tipo)");

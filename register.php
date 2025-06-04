@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($stmt->execute()) {
             $mensaje = "success:Usuario registrado correctamente. Ahora puedes <a href='login.php' class='text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-500 font-medium'>Iniciar sesión</a>";
             // Redirigir al usuario al login después de un registro exitoso
-            header("Location: login.php");
+            header("Location:index.php");
             exit();
         } else {
             $mensaje = "Error al registrar usuario.";
@@ -48,6 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - Granja App</title>
+    <link rel="shortcut icon" href="./uploads/logo.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>

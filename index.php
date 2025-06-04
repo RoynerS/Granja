@@ -114,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="flex items-center justify-center w-20 h-20 mx-auto rounded-full bg-primary-100 dark:bg-primary-900/50 mb-4 shadow-inner-xl animate-float">
                 <i class="bi bi-tree-fill text-primary-600 dark:text-primary-300 text-4xl"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Bienvenido a Granja App</h2>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Bienvenido a LA GRANJA DE RORON</h2>
             <p class="text-gray-500 dark:text-gray-400">Gestiona tu granja de manera eficiente</p>
         </div>
 
@@ -149,14 +149,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             
             <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded">
-                    <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Recordarme</label>
-                </div>
                 
-                <div class="text-sm">
-                    <a href="#" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">¿Olvidaste tu contraseña?</a>
-                </div>
+                
             </div>
             
             <button type="submit" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-md">

@@ -1,0 +1,210 @@
+# SCRIPT PARA CREAR USUARIOS EN ACTIVE DIRECTORY (COMPLETO)
+
+# Habilitar el modo estricto para detectar errores comunes de scripting
+Set-StrictMode -Version Latest
+
+# --- Configuración General ---
+$DominioDN = "DC=ECOPETROL,DEC=LOCAL" # Ajustado a .com
+
+# --- Comprobar si el módulo de Active Directory está cargado ---
+Write-Host "Verificando el módulo de Active Directory..."
+try {
+    Import-Module ActiveDirectory -ErrorAction Stop
+    Write-Host "Módulo de Active Directory cargado exitosamente." -ForegroundColor Green
+}
+catch {
+    Write-Error "Error: El módulo de Active Directory no pudo ser cargado. Asegúrate de que las Herramientas de Administración Remota del Servidor (RSAT) estén instaladas y el módulo esté disponible. Mensaje: $($_.Exception.Message)"
+    exit 1 # Sale del script si el módulo no se carga
+}
+
+# --- Función para verificar si una OU existe ---
+function Test-ADOUExists {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$OUPath
+    )
+    try {
+        # Intenta obtener la OU. Si no existe, Get-ADOrganizationalUnit lanzará un error.
+        Get-ADOrganizationalUnit -Identity $OUPath -ErrorAction Stop | Out-Null
+        $true
+    }
+    catch {
+        Write-Warning "DEBUG: La OU '$OUPath' no se encontró durante la verificación de existencia. Error: $($_.Exception.Message)"
+        $false
+    }
+}
+
+# --- Función para crear un usuario ---
+function New-D1ADUser {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$FirstName,
+
+        [Parameter(Mandatory=$true)]
+        [string]$LastName,
+
+        [Parameter(Mandatory=$true)]
+        [string]$SamAccountName, # Nombre de usuario para inicio de sesión
+
+        [Parameter(Mandatory=$true)]
+        [string]$Password,
+
+        [Parameter(Mandatory=$true)]
+        [string]$OUPath # La ruta completa de la OU donde se creará el usuario
+    )
+
+    $DisplayName = "$FirstName $LastName"
+    $UserPrincipalName = "$SamAccountName@D1.com" # Ajustado el sufijo UPN a .com
+
+    # --- MENSAJES DE DEPURACIÓN CRÍTICOS ---
+    Write-Host "DEBUG: Intentando crear usuario '$SamAccountName'." -ForegroundColor DarkYellow
+    Write-Host "DEBUG: OUPath recibida: '$OUPath'" -ForegroundColor DarkYellow
+    Write-Host "DEBUG: DisplayName: '$DisplayName'" -ForegroundColor DarkYellow
+    Write-Host "DEBUG: UserPrincipalName: '$UserPrincipalName'" -ForegroundColor DarkYellow
+
+
+    # --- Comprobación de existencia de la OU ---
+    if (-not (Test-ADOUExists -OUPath $OUPath)) {
+        Write-Error "Error: La Unidad Organizativa (OU) especificada no existe: '$OUPath'. Por favor, créala manualmente en Active Directory antes de ejecutar el script."
+        return # Salir de la función si la OU no existe
+    }
+
+    try {
+        # Crear el objeto SecureString para la contraseña
+        # ADVERTENCIA: Usar -AsPlainText -Force no es seguro para contraseñas en producción.
+        # Considera generar contraseñas aleatorias o solicitarlas de forma segura.
+        $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+
+        # --- Comprobación de existencia de CUALQUIER objeto con este SamAccountName ---
+        # Esto es crucial para detectar conflictos con usuarios, equipos, contactos, etc.
+        Write-Host "DEBUG: Verificando si ya existe algún objeto con SamAccountName '$SamAccountName'..." -ForegroundColor DarkYellow
+        if (Get-ADObject -Filter "SamAccountName -eq '$SamAccountName'" -ErrorAction SilentlyContinue) {
+            Write-Warning "El SamAccountName '$SamAccountName' ya está en uso por otro objeto en Active Directory. Omitiendo la creación."
+            return # Salir de la función para este usuario
+        }
+
+        Write-Host "DEBUG: SamAccountName '$SamAccountName' disponible. Procediendo a la creación del usuario..." -ForegroundColor DarkYellow
+        Write-Host "DEBUG: Parámetros para New-ADUser: -Name '$DisplayName', -GivenName '$FirstName', -Surname '$LastName', -SamAccountName '$SamAccountName', -UserPrincipalName '$UserPrincipalName', -Path '$OUPath'" -ForegroundColor DarkYellow
+
+        # Crear el usuario
+        New-ADUser -Name $DisplayName `
+            -GivenName $FirstName `
+            -Surname $LastName `
+            -SamAccountName $SamAccountName `
+            -UserPrincipalName $UserPrincipalName `
+            -AccountPassword $SecurePassword `
+            -Path $OUPath `
+            -Enabled $true `
+            -ChangePasswordAtLogon $true `
+            -Description "Usuario creado por script para $OUPath" -ErrorAction Stop # Añadido -ErrorAction Stop para capturar el error más directamente
+
+        Write-Host "Usuario '$SamAccountName' creado exitosamente en '$OUPath'." -ForegroundColor Green
+
+    }
+    catch {
+        # Imprimir detalles completos del error para una mejor depuración
+        Write-Error "Error grave al crear el usuario '$SamAccountName' en OU '$OUPath':"
+        Write-Error "  Tipo de error: $($_.Exception.GetType().FullName)"
+        Write-Error "  Mensaje: $($_.Exception.Message)"
+        Write-Error "  StackTrace: $($_.ScriptStackTrace)"
+        # Si el error es una excepción de Active Directory, obtener más detalles
+        if ($_.Exception.InnerException -is [System.DirectoryServices.Protocols.DirectoryException]) {
+            Write-Error "  InnerException (AD Error): $($_.Exception.InnerException.Message)"
+        }
+    }
+}
+
+# --- EJEMPLOS DE USO: Creación de Usuarios por Departamento/OU (3 usuarios por cada uno) ---
+
+# --- Gerencia Área Administrativa (GAA) ---
+# OUs: OU=DJ,OU=GAA,OU=D1.com / OU=DTH,OU=GAA,OU=D1.com
+Write-Host "`n--- Creando usuarios para Gerencia Área Administrativa (GAA) ---"
+
+# Departamento Jurídico (DJ)
+Write-Host "`n  -- Departamento Jurídico (DJ) --"
+New-D1ADUser -FirstName "Juan" -LastName "Perez" -SamAccountName "jperez" -Password "P@ssw0rd123" -OUPath "OU=DJ,OU=GAA,$DominioDN"
+New-D1ADUser -FirstName "Maria" -LastName "Gomez" -SamAccountName "mgomez" -Password "P@ssw0rd123" -OUPath "OU=DJ,OU=GAA,$DominioDN"
+New-D1ADUser -FirstName "Pedro" -LastName "Lopez" -SamAccountName "plopez" -Password "P@ssw0rd123" -OUPath "OU=DJ,OU=GAA,$DominioDN"
+
+# Director Talento Humano (DTH)
+Write-Host "`n  -- Talento Humano (DTH) --"
+New-D1ADUser -FirstName "Ana" -LastName "Martinez" -SamAccountName "amartinez" -Password "P@ssw0rd123" -OUPath "OU=AC,$DominioDN"
+New-D1ADUser -FirstName "Luis" -LastName "Herrera" -SamAccountName "lherrera" -Password "P@ssw0rd123" -OUPath "OU=DTH,OU=GAA,$DominioDN"
+New-D1ADUser -FirstName "Sofia" -LastName "Vidal" -SamAccountName "svidal" -Password "P@ssw0rd123" -OUPath "OU=DTH,OU=GAA,$DominioDN"
+
+
+# --- Gerencia Área Comercial (GAC) ---
+# OUs: OU=Contabilidad,OU=GAC,OU=D1.com / OU=Presupuestos,OU=GAC,OU=D1.com / OU=Tesorería,OU=GAC,OU=D1.com
+Write-Host "`n--- Creando usuarios para Gerencia Área Comercial (GAC) ---"
+
+# Contabilidad
+Write-Host "`n  -- Contabilidad --"
+New-D1ADUser -FirstName "Sofia" -LastName "Hernandez" -SamAccountName "shernandez" -Password "P@ssw0rd123" -OUPath "OU=Contabilidad,OU=GAC,$DominioDN"
+New-D1ADUser -FirstName "Diego" -LastName "Cruz" -SamAccountName "dcruz" -Password "P@ssw0rd123" -OUPath "OU=Contabilidad,OU=GAC,$DominioDN"
+New-D1ADUser -FirstName "Paula" -LastName "Blanco" -SamAccountName "pblanco" -Password "P@ssw0rd123" -OUPath "OU=Contabilidad,OU=GAC,$DominioDN"
+
+# Presupuestos
+Write-Host "`n  -- Presupuestos --"
+New-D1ADUser -FirstName "Fernando" -LastName "Diaz" -SamAccountName "fdiaz" -Password "P@ssw0rd123" -OUPath "OU=Presupuestos,OU=GAC,$DominioDN"
+New-D1ADUser -FirstName "Gabriela" -LastName "Rojas" -SamAccountName "grojas" -Password "P@ssw0rd123" -OUPath "OU=Presupuestos,OU=GAC,$DominioDN"
+New-D1ADUser -FirstName "Ricardo" -LastName "Navarro" -SamAccountName "rnavarro" -Password "P@ssw0rd123" -OUPath "OU=Presupuestos,OU=GAC,$DominioDN"
+
+# Tesorería
+Write-Host "`n  -- Tesorería --"
+New-D1ADUser -FirstName "Carlos" -LastName "Ruiz" -SamAccountName "cruiz" -Password "P@ssw0rd123" -OUPath "OU=Tesorería,OU=GAC,$DominioDN"
+New-D1ADUser -FirstName "Laura" -LastName "Sanchez" -SamAccountName "lsanchez" -Password "P@ssw0rd123" -OUPath "OU=Tesorería,OU=GAC,$DominioDN"
+New-D1ADUser -FirstName "Felipe" -LastName "Ortega" -SamAccountName "fortega" -Password "P@ssw0rd123" -OUPath "OU=Tesorería,OU=GAC,$DominioDN"
+
+
+# --- Gerencia Área Financiera (GAF) ---
+# OUs: OU=DR,OU=GAF,OU=D1.com / OU=DT,OU=GAF,OU=D1.com / OU=Operativos,OU=GAF,OU=D1.com / OU=SG,OU=GAF,OU=D1.com
+Write-Host "`n--- Creando usuarios para Gerencia Área Financiera (GAF) ---"
+
+# Directores Regionales (DR)
+Write-Host "`n  -- Directores Regionales (DR) --"
+New-D1ADUser -FirstName "Alejandro" -LastName "Flores" -SamAccountName "aflores" -Password "P@ssw0rd123" -OUPath "OU=DR,OU=GAF,$DominioDN"
+New-D1ADUser -FirstName "Carolina" -LastName "Pardo" -SamAccountName "cpardo" -Password "P@ssw0rd123" -OUPath "OU=DR,OU=GAF,$DominioDN"
+New-D1ADUser -FirstName "Jorge" -LastName "Quintero" -SamAccountName "jquintero" -Password "P@ssw0rd123" -OUPath "OU=DR,OU=GAF,$DominioDN"
+
+# Director Tienda (DT)
+Write-Host "`n  -- Director Tienda (DT) --"
+New-D1ADUser -FirstName "Elena" -LastName "Vargas" -SamAccountName "evargas" -Password "P@ssw0rd123" -OUPath "OU=DT,OU=GAF,$DominioDN"
+New-D1ADUser -FirstName "Daniel" -LastName "Salazar" -SamAccountName "dsalazar" -Password "P@ssw0rd123" -OUPath "OU=DT,OU=GAF,$DominioDN"
+New-D1ADUser -FirstName "Monica" -LastName "Cabrera" -SamAccountName "mcabrera" -Password "P@ssw0rd123" -OUPath "OU=DT,OU=GAF,$DominioDN"
+
+# Operativos
+Write-Host "`n  -- Operativos --"
+New-D1ADUser -FirstName "Roberto" -LastName "Castro" -SamAccountName "rcastro" -Password "P@ssw0rd123" -OUPath "OU=Operativos,OU=GAF,$DominioDN"
+New-D1ADUser -FirstName "Valeria" -LastName "Mora" -SamAccountName "vmora" -Password "P@ssw0rd123" -OUPath "OU=Operativos,OU=GAF,$DominioDN"
+New-D1ADUser -FirstName "Javier" -LastName "Guerrero" -SamAccountName "jguerrero" -Password "P@ssw0rd123" -OUPath "OU=Operativos,OU=GAF,$DominioDN"
+
+# Servicios Generales (SG)
+Write-Host "`n  -- Servicios Generales (SG) --"
+New-D1ADUser -FirstName "Patricia" -LastName "Morales" -SamAccountName "pmorales" -Password "P@ssw0rd123" -OUPath "OU=SG,OU=GAF,$DominioDN"
+New-D1ADUser -FirstName "Gustavo" -LastName "Leal" -SamAccountName "gleal" -Password "P@ssw0rd123" -OUPath "OU=SG,OU=GAF,$DominioDN"
+New-D1ADUser -FirstName "Lorena" -LastName "Velez" -SamAccountName "lvelez" -Password "P@ssw0rd123" -OUPath "OU=SG,OU=GAF,$DominioDN"
+
+
+# --- Gerencia Área Logística (GAL) ---
+# OUs: OU=JB,OU=GAL,OU=D1.com / OU=JD,OU=GAL,OU=D1.com / OU=TE,OU=GAL,OU=D1.com
+Write-Host "`n--- Creando usuarios para Gerencia Área Logística (GAL) ---"
+
+# Jefe de Bodega (JB)
+Write-Host "`n  -- Jefe de Bodega (JB) --"
+New-D1ADUser -FirstName "Miguel" -LastName "Reyes" -SamAccountName "mreyes" -Password "P@ssw0rd123" -OUPath "OU=JB,OU=GAL,$DominioDN"
+New-D1ADUser -FirstName "Jessica" -LastName "Franco" -SamAccountName "jfranco" -Password "P@ssw0rd123" -OUPath "OU=JB,OU=GAL,$DominioDN"
+New-D1ADUser -FirstName "Andres" -LastName "Pineda" -SamAccountName "apineda" -Password "P@ssw0rd123" -OUPath "OU=JB,OU=GAL,$DominioDN"
+
+# Jefe de Distribución (JD)
+Write-Host "`n  -- Jefe de Distribución (JD) --"
+New-D1ADUser -FirstName "Diana" -LastName "Salas" -SamAccountName "dsalas" -Password "P@ssw0rd123" -OUPath "OU=JD,OU=GAL,$DominioDN"
+New-D1ADUser -FirstName "Oscar" -LastName "Montoya" -SamAccountName "omontoya" -Password "P@ssw0rd123" -OUPath "OU=JD,OU=GAL,$DominioDN"
+New-D1ADUser -FirstName "Viviana" -LastName "Castaño" -SamAccountName "vcastano" -Password "P@ssw0rd123" -OUPath "OU=JD,OU=GAL,$DominioDN"
+
+# Transporte y Embarque (TE)
+Write-Host "`n  -- Transporte y Embarque (TE) --"
+New-D1ADUser -FirstName "Pablo" -LastName "Torres" -SamAccountName "ptorres" -Password "P@ssw0rd123" -OUPath "OU=TE,OU=GAL,$DominioDN"
+New-D1ADUser -FirstName "Marcela" -LastName "Cortez" -SamAccountName "mcortez" -Password "P@ssw0rd123" -OUPath "OU=TE,OU=GAL,$DominioDN"
+New-D1ADUser -FirstName "Esteban" -LastName "Romero" -SamAccountName "eromero" -Password "P@ssw0rd123" -OUPath "OU=TE,OU=GAL,$DominioDN"
+
+Write-Host "`n--- Proceso de creación de usuarios finalizado ---"

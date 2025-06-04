@@ -120,6 +120,7 @@ unset($_SESSION['mensaje']); // Limpia el mensaje después de mostrarlo
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - Granja</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="./uploads/logo.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
@@ -294,16 +295,18 @@ unset($_SESSION['mensaje']); // Limpia el mensaje después de mostrarlo
                 <a href="#" class="nav-link px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 active">
                     <i class="bi bi-speedometer2 mr-1"></i> Inicio
                 </a>
+                 <?php if ($rol === 'administrador' || $rol === 'veterinario'): ?>
                 <a href="./modulos/animales.php" class="nav-link px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                     <i class="bi bi-egg-fried mr-1"></i> Animales
                 </a>
+                <?php endif; ?>
                 <a href="./modulos/inventario.php" class="nav-link px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                     <i class="bi bi-box-seam mr-1"></i> Inventario
                 </a>
                 <a href="./modulos/tareas_veterinario.php" class="nav-link px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                     <i class="bi bi-list-check mr-1"></i> Tareas
                 </a>
-                <?php if ($rol === 'administrador' || $rol === 'trabajador'): // Solo mostrar si NO es veterinario ?>
+                <?php if ($rol === 'administrador'): // Solo mostrar si NO es veterinario ?>
                 <a href="reportes.php" class="nav-link px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                     <i class="bi bi-graph-up mr-1"></i> Gráficas
                 </a>
@@ -375,16 +378,18 @@ unset($_SESSION['mensaje']); // Limpia el mensaje después de mostrarlo
                 <a href="#" @click="open = false" class="nav-link w-full text-center py-2 px-4 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-md">
                     <i class="bi bi-speedometer2 mr-2"></i> Inicio
                 </a>
+                <?php if ($rol === 'administrador' || $rol === 'veterinario'): ?>
                 <a href="./modulos/animales.php" @click="open = false" class="nav-link w-full text-center py-2 px-4 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-md">
                     <i class="bi bi-egg-fried mr-2"></i> Animales
                 </a>
+                <?php endif; ?>
                 <a href="./modulos/inventario.php" @click="open = false" class="nav-link w-full text-center py-2 px-4 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-md">
                     <i class="bi bi-box-seam mr-2"></i> Inventario
                 </a>
                 <a href="./modulos/tareas_veterinario.php" @click="open = false" class="nav-link w-full text-center py-2 px-4 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-md">
                     <i class="bi bi-list-check mr-2"></i> Tareas
                 </a>
-                <?php if ($rol === 'administrador' || $rol === 'trabajador'): ?>
+                <?php if ($rol === 'administrador'): ?>
                 <a href="reportes.php" @click="open = false" class="nav-link w-full text-center py-2 px-4 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-md">
                     <i class="bi bi-graph-up mr-2"></i> Gráficas
                 </a>
@@ -637,7 +642,7 @@ unset($_SESSION['mensaje']); // Limpia el mensaje después de mostrarlo
     </main> <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center text-center md:text-left">
             <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
-                © <?= date('Y') ?> Granja App - Todos los derechos reservados.
+                © <?= date('Y') ?> LA GRANJA DE RORON - Todos los derechos reservados.
             </div>
             <div class="flex space-x-4">
                 <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Términos</a>
