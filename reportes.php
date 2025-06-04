@@ -503,18 +503,7 @@ try {
                 <div id="animal_sex_chart" style="width: 100%; height: 300px;"></div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft p-4">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">Estado de Vacunación</h3>
-                <div id="animal_vaccination_chart" style="width: 100%; height: 300px;"></div>
-            </div>
-
-
-            <?php if ($rol === 'administrador'): // Este div solo se muestra si el usuario es administrador ?>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-soft p-4">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">Usuarios por Rol</h3>
-                <div id="usuarios_rol_chart" style="width: 100%; height: 300px;"></div>
-            </div>
-            <?php endif; ?>
+           
         </div>
     </div>
         
